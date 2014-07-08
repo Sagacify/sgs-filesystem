@@ -1,0 +1,28 @@
+{
+	"name": "sg-files-system",
+	"description": "Sagacify Files System",
+	"version": "0.0.1",
+	"private": true,
+	"author": "Sagacify (https://github.com/Sagacify)",
+	"engines": {
+		"node": "latest"
+	},
+	"main": "services/system",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Sagacify/sg-files-system.git"
+	},
+	"dependencies": {
+		"async": "latest",
+		"aws-sdk": "latest",
+		"node-uuid": "latest",
+		"tmp": "latest",
+		"mime": "latest",
+		"fluent-ffmpeg": "latest",
+		"mv": "latest",
+		"unzip": "latest",
+		"adm-zip": "latest",
+		"tar": "latest",
+		"fs-extra": "latest"
+	}
+}
