@@ -1,4 +1,4 @@
-var contentType = require('libs/node-lib/mimetypes/content_type').ext;
+var contentType = require('node-lib').content_type.ext;
 var virusScan = require('utils/virusScan');
 var async = require('async');
 
