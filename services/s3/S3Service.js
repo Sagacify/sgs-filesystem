@@ -203,17 +203,17 @@ S3Service.prototype.getFileFromS3AndWriteItToFileSystem = function (filename, bu
 	});
 };
 
-exports.getSecuredFilepath = function (filename, config) {
-	var knox = require('knox');
-	var s3Client = knox.createClient({
-		key: config.accessKeyId,
-		secret: config.secretAccessKey,
-		bucket: config.s3SecuredBucketName
-	});
+// exports.getSecuredFilepath = function (filename, config) {
+// 	var knox = require('knox');
+// 	var s3Client = knox.createClient({
+// 		key: config.accessKeyId,
+// 		secret: config.secretAccessKey,
+// 		bucket: config.s3SecuredBucketName
+// 	});
 
-	var expires = new Date();
-	expires.setMinutes(expires.getMinutes() + 30);
-	return s3Client.signedUrl(filename, expires);
-};
+// 	var expires = new Date();
+// 	expires.setMinutes(expires.getMinutes() + 30);
+// 	return s3Client.signedUrl(filename, expires);
+// };
 
-exports.S3Service = S3Service;
+module.exports = S3Service;
