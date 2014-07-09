@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"async": "latest",
-		"aws-sdk": "latest",
+		"aws-sdk": "2.0.0-rc.19",
 		"node-uuid": "latest",
 		"tmp": "latest",
 		"mime": "latest",
