@@ -1,46 +1,75 @@
 var contentType = require('node-lib').content_type.ext;
-var virusScan = require('utils/virusScan');
-var async = require('async');
+var VirusScan = require('utils/VirusScan');
+var FSService = require('../local/FSService');
 
+var async = require('async');
 var AWS = require('aws-sdk');
 var uuid = require('node-uuid');
 var fs = require('fs');
 var tmp = require('tmp');
-/* Create AWS environement */
-/* *********************** */
-AWS.config.update({
-	region: config.AWS.region,
-	accessKeyId: config.AWS.accessKeyId,
-	secretAccessKey: config.AWS.secretAccessKey
-});
-s3 = new AWS.S3();
-var writeQueue = async.queue(function (params, callback) {
-	s3.client.putObject(params, callback);
+
+var writeQueue = async.queue(function (task, callback) {
+	task(callback);
 }, 3);
 
-var readQueue = async.queue(function (params, callback) {
-	s3.client.getObject(params, callback);
+var readQueue = async.queue(function (task, callback) {
+	task(callback);
 }, 3);
 
-var removeQueue = async.queue(function (params, callback) {
-	s3.client.deleteObject(params, callback);
+var removeQueue = async.queue(function (task, callback) {
+	task(callback);
 }, 3);
 
-var deleteQueue = async.queue(function (params, callback) {
-	s3.client.deleteObjects(params, callback);
+var deleteQueue = async.queue(function (task, callback) {
+	task(callback);
 }, 3);
 
-/* Create bucket if not existing */
-exports.s3BucketInitialization = function (config) {
+function S3Service(config) {
+	this.getConfig = function () {
+		return config;
+	};
+	AWS.config.update({
+		region: config.region,
+		accessKeyId: config.accessKeyId,
+		secretAccessKey: config.secretAccessKey
+	});
+	var s3 = new AWS.S3();
+	this.getS3 = function () {
+		return s3;
+	};
+}
+
+S3Service.prototype.addToWriteQueue = function (params, callback) {
+	writeQueue.push(function (callback) {
+		this.getS3().client.putObject(params, callback);
+	}, callback);
+};
+
+S3Service.prototype.addToReadQueue = function (params, callback) {
+	readQueue.push(function (callback) {
+		this.getS3().client.getObject(params, callback);
+	}, callback);
+};
+
+S3Service.prototype.addToRemoveQueue = function (params, callback) {
+	removeQueue.push(function (callback) {
+		this.getS3().client.deleteObject(params, callback);
+	}, callback);
+};
+
+S3Service.prototype.addToDeleteQueue = function (params, callback) {
+	deleteQueue.push(function (callback) {
+		this.getS3().client.deleteObjects(params, callback);
+	}, callback);
+};
+
+S3Service.prototype.bucketInitialization = function () {
+	var self = this;
 	var bucketNames = [];
-	if (config.AWS.s3BucketName) {
-		bucketNames.push(config.AWS.s3BucketName);
-	}
-	if (config.AWS.s3SecuredBucketName) {
-		bucketNames.push(config.AWS.s3SecuredBucketName);
-	}
+	if (this.getConfig().s3BucketName) bucketNames.push(this.getConfig().s3BucketName);
+	if (this.getConfig().s3SecuredBucketName) bucketNames.push(this.getConfig().s3SecuredBucketName);
 
-	s3.client.listBuckets(function (err, data) {
+	this.getS3().client.listBuckets(function (err, data) {
 		if (err) {
 			console.log(err);
 		} else {
@@ -48,7 +77,7 @@ exports.s3BucketInitialization = function (config) {
 				if (data.Buckets.filter(function (bucket) {
 					return bucket.Name == bucketName;
 				}).length === 0) {
-					s3.client.createBucket({
+					self.getS3().client.createBucket({
 						Bucket: bucketName
 					}, function (err, data) {
 						if (err) {
@@ -63,71 +92,45 @@ exports.s3BucketInitialization = function (config) {
 	});
 };
 
-exports.writeFileToS3 = function (base64data, originalFilename, extension, secure, callback) {
+S3Service.prototype.writeFileToS3 = function (base64data, originalFilename, extension, secure, callback) {
 	var name = uuid.v4();
 	var filename = extension ? name + "." + extension : name;
 
 	console.log("write file to S3: ", originalFilename);
 
-	writeQueue.push({
-		Bucket: secure ? config.AWS.s3SecuredBucketName : config.AWS.s3BucketName,
+	this.addToWriteQueue({
+		Bucket: secure ? this.getConfig().s3SecuredBucketName : this.getConfig().s3BucketName,
 		Key: filename,
 		Body: new Buffer(base64data, 'base64'),
-		ContentType: ct.getContentType(extension),
+		ContentType: contentType.getContentType(extension),
 		ContentDisposition: 'attachment; filename="' + originalFilename || filename + '"'
 	}, function (err) {
 		callback(err, filename);
 	});
 };
 
-exports.readFileFromS3 = function (filename, secureOrBucket, callback) {
+S3Service.prototype.readFileFromS3 = function (filename, secureOrBucket, callback) {
 	var bucket;
 	if (typeof secureOrBucket == "string") {
 		bucket = secureOrBucket;
 	} else {
-		bucket = secureOrBucket ? config.AWS.s3SecuredBucketName : config.AWS.s3BucketName;
+		bucket = secureOrBucket ? this.getConfig().s3SecuredBucketName : this.getConfig().s3BucketName;
 	}
 
-	readQueue.push({
+	this.addToReadQueue({
 		Bucket: bucket,
 		Key: filename
 	}, callback);
 };
 
-exports.writeDataToFileSystem = function (filename, data, callback) {
-	tmp.dir(function (err, directoryPath) {
-		if (err) {
-			console.log("err: ");
-			console.log(err);
-			return callback(err);
-		}
-
-		var filepath = directoryPath + "/" + filename;
-		fs.writeFile(filepath, data, function (err) {
-			callback(err, filepath);
-		});
-	});
-};
-
-exports.createStreamToFileSystem = function (filename, callback) {
-	tmp.dir(function (err, directoryPath) {
-		if (err) {
-			return callback(err);
-		}
-
-		var filepath = directoryPath + "/" + (filename ? filename : "no-name");
-		callback(null, filepath, fs.createWriteStream(filepath));
-	});
-};
-
-exports.removeFileFromS3 = function (filename, secure, callback) {
-	removeQueue.push({
-		Bucket: secure ? config.AWS.s3SecuredBucketName : config.AWS.s3BucketName,
+S3Service.prototype.removeFileFromS3 = function (filename, secure, callback) {
+	this.addToRemoveQueue({
+		Bucket: secure ? this.getConfig().s3SecuredBucketName : this.getConfig().s3BucketName,
 		Key: filename
 	}, callback);
 };
 
-exports.removeFilesFromS3 = function (filenames, secure, callback) {
+S3Service.prototype.removeFilesFromS3 = function (filenames, secure, callback) {
 	if (!filenames.length) {
 		return callback(new SGError('NO_FILENAMES'));
 	}
@@ -138,20 +141,88 @@ exports.removeFilesFromS3 = function (filenames, secure, callback) {
 		});
 	});
 
-	deleteQueue.push({
-		Bucket: secure ? config.AWS.s3SecuredBucketName : config.AWS.s3BucketName,
+	this.addToDeleteQueue({
+		Bucket: secure ? this.getConfig().s3SecuredBucketName : this.getConfig().s3BucketName,
 		Delete: {
 			Objects: objects
 		}
 	}, callback);
 };
 
-exports.getSecuredFilepath = function (filename) {
+S3Service.prototype.uploadThenDeleteLocalFile = function (filepath, originalFilename, extension, secure, callback) {
+	var self = this;
+	//Scan for viruses
+	VirusScan.launchFileScan(filepath, function (err, msg) {
+		if (err) {
+			//An error occured (might be a virus)
+			console.log(msg);
+			fs.unlink(filepath);
+			return callback(err);
+		}
+		//No virus detected
+		FSService.readThenDeleteLocalFile(filepath, function (err, data) {
+			if (err) {
+				return callback(err);
+			}
+			self.writeFileToS3(new Buffer(data, 'binary').toString('base64'), originalFilename, extension, secure, function (err, filename) {
+				if (err) {
+					return callback(err);
+				}
+
+				callback(err, self.getConfig().s3StaticURL + "/" + (secure ? self.getConfig().s3SecuredBucketName : self.getConfig().s3BucketName) + "/" + filename);
+			});
+		});
+	});
+};
+
+S3Service.prototype.getFileFromS3AndWriteItToFileSystem = function (filename, bucket, callback) {
+	this.readFileFromS3(filename, bucket, function (err, data) {
+		if (err) {
+			return callback(err);
+		}
+
+		FSService.writeDataToFileSystem(filename, data.Body, function (err, filepath) {
+			if (err) {
+				return callback(err);
+			}
+
+			console.log("filepath", filepath);
+
+			VirusScan.launchFileScan(filepath, function (err, msg) {
+				if (err) {
+					//An error occured (might be a virus)
+					console.log(msg);
+					// TODO delete file on S3
+					fs.unlink(filepath);
+					return callback(err);
+				}
+
+				callback(null, filepath);
+			});
+		});
+	});
+};
+
+exports.getConfig = function () {
+	// TODO for each attr in AWS
+	return {
+		region: config.AWS.region,
+		accessKeyId: config.AWS.accessKeyId,
+		secretAccessKey: config.AWS.secretAccessKey,
+		s3StaticURL: config.AWS.s3StaticURL,
+		s3BucketName: config.AWS.s3BucketName,
+		s3SecuredBucketName: config.AWS.s3SecuredBucketName,
+		sesFromEmail: config.AWS.sesFromEmail,
+		sesSender: config.AWS.sesSender
+	};
+};
+
+exports.getSecuredFilepath = function (filename, config) {
 	var knox = require('knox');
 	var s3Client = knox.createClient({
-		key: config.AWS.accessKeyId,
-		secret: config.AWS.secretAccessKey,
-		bucket: config.AWS.s3SecuredBucketName
+		key: config.accessKeyId,
+		secret: config.secretAccessKey,
+		bucket: config.s3SecuredBucketName
 	});
 
 	var expires = new Date();
@@ -159,60 +230,4 @@ exports.getSecuredFilepath = function (filename) {
 	return s3Client.signedUrl(filename, expires);
 };
 
-exports.uploadThenDeleteLocalFile = function (filepath, originalFilename, extension, secure, callback) {
-	//Scan for viruses
-	virusScan.launchFileScan(filepath, function (err, msg) {
-		if (err) {
-			//An error occured (might be a virus)
-			console.log(msg);
-			fs.unlink(filepath);
-			console.log('callback');
-			return callback(err);
-		}
-		//No virus detected
-		exports.readThenDeleteLocalFile(filepath, function (err, data) {
-			if (err) {
-				return callback(err);
-			}
-			exports.writeFileToS3(new Buffer(data, 'binary').toString('base64'), originalFilename, extension, secure, function (err, filename) {
-				if (err) {
-					console.log("ERROR WRITE TO S3");
-					console.log(err);
-					return callback(err, null);
-				}
-
-				callback(err, config.AWS.s3StaticURL + "/" + (secure ? config.AWS.s3SecuredBucketName : config.AWS.s3BucketName) + "/" + filename);
-			});
-		});
-	});
-};
-
-exports.readThenDeleteLocalFile = function (filepath, callback) {
-	fs.readFile(filepath, function (err, data) {
-		fs.unlink(filepath, function (err) {
-			if (!err) {
-				console.log("successfully deleted " + filepath);
-			}
-		});
-		callback(err, data ? data : null);
-	});
-};
-
-exports.deleteLocalFile = function (filepath, callback) {
-	fs.unlink(filepath, function (err) {
-		if (!err) {
-			console.log("successfully deleted " + filepath);
-		}
-		callback(err);
-	});
-};
-
-function readLocalFile (filepath, callback) {
-	fs.readFile(filepath, callback);
-}
-
-exports.getSize = function (filepath, callback) {
-	fs.stat(filepath, function (err, stats) {
-		callback(err, stats ? stats.size : 0);
-	});
-};
+exports.S3Service = S3Service;
