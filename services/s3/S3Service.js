@@ -40,26 +40,30 @@ function S3Service(config) {
 }
 
 S3Service.prototype.addToWriteQueue = function (params, callback) {
+	var self = this;
 	writeQueue.push(function (callback) {
-		this.getS3().client.putObject(params, callback);
+		self.getS3().client.putObject(params, callback);
 	}, callback);
 };
 
 S3Service.prototype.addToReadQueue = function (params, callback) {
+	var self = this;
 	readQueue.push(function (callback) {
-		this.getS3().client.getObject(params, callback);
+		self.getS3().client.getObject(params, callback);
 	}, callback);
 };
 
 S3Service.prototype.addToRemoveQueue = function (params, callback) {
+	var self = this;
 	removeQueue.push(function (callback) {
-		this.getS3().client.deleteObject(params, callback);
+		self.getS3().client.deleteObject(params, callback);
 	}, callback);
 };
 
 S3Service.prototype.addToDeleteQueue = function (params, callback) {
+	var self = this;
 	deleteQueue.push(function (callback) {
-		this.getS3().client.deleteObjects(params, callback);
+		self.getS3().client.deleteObjects(params, callback);
 	}, callback);
 };
 
