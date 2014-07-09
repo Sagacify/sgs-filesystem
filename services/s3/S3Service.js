@@ -203,20 +203,6 @@ S3Service.prototype.getFileFromS3AndWriteItToFileSystem = function (filename, bu
 	});
 };
 
-exports.getConfig = function () {
-	// TODO for each attr in AWS
-	return {
-		region: config.AWS.region,
-		accessKeyId: config.AWS.accessKeyId,
-		secretAccessKey: config.AWS.secretAccessKey,
-		s3StaticURL: config.AWS.s3StaticURL,
-		s3BucketName: config.AWS.s3BucketName,
-		s3SecuredBucketName: config.AWS.s3SecuredBucketName,
-		sesFromEmail: config.AWS.sesFromEmail,
-		sesSender: config.AWS.sesSender
-	};
-};
-
 exports.getSecuredFilepath = function (filename, config) {
 	var knox = require('knox');
 	var s3Client = knox.createClient({
