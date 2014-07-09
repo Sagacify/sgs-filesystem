@@ -1,5 +1,5 @@
 var contentType = require('node-lib').content_type.ext;
-var VirusScan = require('utils/VirusScan');
+var VirusScan = require('../../utils/VirusScan');
 var FSService = require('../local/FSService');
 
 var async = require('async');
