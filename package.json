@@ -7,7 +7,7 @@
 	"engines": {
 		"node": "latest"
 	},
-	"main": "services/system",
+	"main": "./modules",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Sagacify/sg-files-system.git"
