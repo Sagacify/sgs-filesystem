@@ -18,7 +18,7 @@
 		"node-uuid": "latest",
 		"tmp": "latest",
 		"mime": "latest",
-		"fluent-ffmpeg": "latest",
+		"fluent-ffmpeg": "1.7.1",
 		"mv": "latest",
 		"unzip": "latest",
 		"adm-zip": "latest",
