@@ -220,4 +220,4 @@ S3Service.prototype.getSecuredFilepath = function (filename) {
 	return s3Client.signedUrl(filename, expires);
 };
 
-module.exports.S3Service = S3Service;
+module.exports = S3Service;
