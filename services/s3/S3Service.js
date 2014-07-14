@@ -7,6 +7,7 @@ var AWS = require('aws-sdk');
 var uuid = require('node-uuid');
 var fs = require('fs');
 var tmp = require('tmp');
+var knox = require('knox');
 
 var writeQueue = async.queue(function (task, callback) {
 	task(callback);
@@ -207,17 +208,16 @@ S3Service.prototype.getFileFromS3AndWriteItToFileSystem = function (filename, bu
 	});
 };
 
-// exports.getSecuredFilepath = function (filename, config) {
-// 	var knox = require('knox');
-// 	var s3Client = knox.createClient({
-// 		key: config.accessKeyId,
-// 		secret: config.secretAccessKey,
-// 		bucket: config.s3SecuredBucketName
-// 	});
+S3Service.getSecuredFilepath = function (filename, config) {
+	var s3Client = knox.createClient({
+		key: config.accessKeyId,
+		secret: config.secretAccessKey,
+		bucket: config.s3SecuredBucketName
+	});
 
-// 	var expires = new Date();
-// 	expires.setMinutes(expires.getMinutes() + 30);
-// 	return s3Client.signedUrl(filename, expires);
-// };
+	var expires = new Date();
+	expires.setMinutes(expires.getMinutes() + 30);
+	return s3Client.signedUrl(filename, expires);
+};
 
 module.exports = S3Service;
