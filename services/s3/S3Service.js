@@ -208,11 +208,11 @@ S3Service.prototype.getFileFromS3AndWriteItToFileSystem = function (filename, bu
 	});
 };
 
-S3Service.getSecuredFilepath = function (filename, config) {
+S3Service.prototype.getSecuredFilepath = function (filename) {
 	var s3Client = knox.createClient({
-		key: config.accessKeyId,
-		secret: config.secretAccessKey,
-		bucket: config.s3SecuredBucketName
+		key: this.getConfig().accessKeyId,
+		secret: this.getConfig().secretAccessKey,
+		bucket: this.getConfig().s3SecuredBucketName
 	});
 
 	var expires = new Date();
@@ -220,4 +220,4 @@ S3Service.getSecuredFilepath = function (filename, config) {
 	return s3Client.signedUrl(filename, expires);
 };
 
-module.exports = S3Service;
+module.exports.S3Service = S3Service;
