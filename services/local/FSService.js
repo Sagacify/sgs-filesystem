@@ -1,5 +1,8 @@
 var fs = require('fs');
+var path = require('path');
+
 var tmp = require('tmp');
+var request = require('request');
 
 exports.readThenDeleteLocalFile = function (filepath, callback) {
 	fs.readFile(filepath, function (err, data) {
@@ -39,7 +42,31 @@ exports.createStreamToFileSystem = function (filename, callback) {
 			return callback(err);
 		}
 
-		var filepath = directoryPath + "/" + (filename ? filename : "no-name");
+		var filepath = path.join(directoryPath, filename);
 		callback(null, filepath, fs.createWriteStream(filepath));
+	});
+};
+
+exports.getFileFromUrl = function (url) {
+	FSService.createStreamToFileSystem(link.filename, function (err, filepath, stream) {
+		if (err) {
+			return callback(err);
+		}
+
+		var req = request(link).pipe(stream);
+
+		stream.on('finish', function () {
+			console.log('file downloaded');
+
+			link.filepath = filepath;
+
+			sgMessagingServer().publish('link:' + link._id + ':file', {
+				link: link
+			});
+		});
+
+		req.on('close', function () {
+			console.log("end request");
+		});
 	});
 };
