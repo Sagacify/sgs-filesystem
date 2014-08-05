@@ -47,22 +47,18 @@ exports.createStreamToFileSystem = function (filename, callback) {
 	});
 };
 
-exports.getFileFromUrl = function (url) {
-	FSService.createStreamToFileSystem(link.filename, function (err, filepath, stream) {
+exports.getFileFromUrl = function (url, filename, callback) {
+	FSService.createStreamToFileSystem(filename, function (err, filepath, stream) {
 		if (err) {
 			return callback(err);
 		}
 
-		var req = request(link).pipe(stream);
+		var req = request(url).pipe(stream);
 
 		stream.on('finish', function () {
 			console.log('file downloaded');
 
-			link.filepath = filepath;
-
-			sgMessagingServer().publish('link:' + link._id + ':file', {
-				link: link
-			});
+			callback(null, filepath);
 		});
 
 		req.on('close', function () {

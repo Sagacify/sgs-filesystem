@@ -154,6 +154,32 @@ S3Service.prototype.removeFilesFromS3 = function (filenames, secure, callback) {
 	}, callback);
 };
 
+S3Service.prototype.uploadFileOnS3 = function (filepath, originalFilename, extension, secure, callback) {
+	var self = this;
+	//Scan for viruses
+	VirusScan.launchFileScan(filepath, function (err, msg) {
+		if (err) {
+			//An error occured (might be a virus)
+			console.log(msg);
+			fs.unlink(filepath);
+			return callback(err);
+		}
+		//No virus detected
+		fs.readFile(filepath, function (err, data) {
+			if (err) {
+				return callback(err);
+			}
+			self.writeFileToS3(new Buffer(data, 'binary').toString('base64'), originalFilename, extension, secure, function (err, filename) {
+				if (err) {
+					return callback(err);
+				}
+
+				callback(err, self.getConfig().s3StaticURL + "/" + self.getConfig().s3BucketName + "/" + filename);
+			});
+		});
+	});
+};
+
 S3Service.prototype.uploadThenDeleteLocalFile = function (filepath, originalFilename, extension, secure, callback) {
 	var self = this;
 	//Scan for viruses
