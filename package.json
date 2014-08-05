@@ -25,7 +25,7 @@
 		"tar": "latest",
 		"fs-extra": "latest",
 		"knox": "latest",
-		"request": "^2.39.1",
+		"request": "^2.39.0",
 
 		"node-lib": "git+ssh://git@github.com:Sagacify/node-lib.git#worker"
 	}
