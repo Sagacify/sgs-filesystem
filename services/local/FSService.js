@@ -36,33 +36,55 @@ exports.writeDataToFileSystem = function (filename, data, callback) {
 	});
 };
 
-exports.createStreamToFileSystem = function (filename, callback) {
-	tmp.dir(function (err, directoryPath) {
+exports.createStreamToFileSystem = function (callback) {
+	tmp.file(function (err, filepath) {
 		if (err) {
 			return callback(err);
 		}
 
-		var filepath = path.join(directoryPath, filename);
 		callback(null, filepath, fs.createWriteStream(filepath));
 	});
 };
 
-exports.getFileFromUrl = function (url, filename, callback) {
-	FSService.createStreamToFileSystem(filename, function (err, filepath, stream) {
+exports.getFileFromUrl = function (url, callback) {
+	exports.createStreamToFileSystem(function (err, filepath, stream) {
 		if (err) {
 			return callback(err);
 		}
 
-		var req = request(url).pipe(stream);
+		request(url, function (err, response, body) {
+			if (err) {
+				return callback(err);
+			}
 
-		stream.on('finish', function () {
-			console.log('file downloaded');
+			var filename = _getFilename(response);
 
-			callback(null, filepath);
-		});
+			console.log("filename:", filename);
 
-		req.on('close', function () {
-			console.log("end request");
-		});
+			stream.on('finish', function () {
+				console.log('file downloaded');
+
+				callback(null, filepath, filename);
+			});
+		}).pipe(stream);
 	});
 };
+
+function _getFilename(response) {
+	console.log("headers:", response.headers);
+
+	// TODO sanitize inputs
+
+	if (response.headers['content-type'] && !! ~response.headers['content-type'].indexOf('name')) {
+		return _extractFilenameFromHeaders(response.headers['content-type'], 'name');
+	} else if (response.headers['content-disposition'] && !! ~response.headers['content-disposition'].indexOf('filename')) {
+		return _extractFilenameFromHeaders(response.headers['content-disposition'], 'filename');
+	} else {
+		return response.req.path.indexOf('/') === 0 ? response.req.path.slice(1) : response.req.path;
+	}
+}
+
+function _extractFilenameFromHeaders(header, key) {
+	var item = header.slice(header.indexOf(key));
+	return item.slice(item.indexOf('"') + 1, -1) || item.slice(item.indexOf('\'') + 1, -1);
+}
