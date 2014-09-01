@@ -57,7 +57,12 @@ exports.getFileFromUrl = function (url, callback) {
 				return callback(err);
 			}
 
-			var filename = _getFilename(response);
+			var filename;
+			try {
+				filename = _getFilename(response);
+			} catch (e) {
+				return callback(e);
+			}
 
 			console.log("filename:", filename);
 
@@ -75,12 +80,16 @@ function _getFilename(response) {
 
 	// TODO sanitize inputs
 
-	if (response.headers['content-type'] && !! ~response.headers['content-type'].indexOf('name')) {
+	if (response.headers['content-type'] && !!~response.headers['content-type'].indexOf('name')) {
 		return _extractFilenameFromHeaders(response.headers['content-type'], 'name');
-	} else if (response.headers['content-disposition'] && !! ~response.headers['content-disposition'].indexOf('filename')) {
+	} else if (response.headers['content-disposition'] && !!~response.headers['content-disposition'].indexOf('filename')) {
 		return _extractFilenameFromHeaders(response.headers['content-disposition'], 'filename');
 	} else {
-		return response.req.path.indexOf('/') === 0 ? response.req.path.slice(1) : response.req.path;
+		////////////////////////////////////////////////////////////////
+		// TODO https://app.asana.com/0/11244390559721/14733882770247 //
+		////////////////////////////////////////////////////////////////
+
+		throw new SGError('NO_FILENAME_FOUND');
 	}
 }
 
