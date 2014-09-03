@@ -137,7 +137,7 @@ S3Service.prototype.removeFileFromS3 = function (filename, secure, callback) {
 
 S3Service.prototype.removeFilesFromS3 = function (filenames, secure, callback) {
 	if (!filenames.length) {
-		return callback(new SGError('NO_FILENAMES'));
+		return callback(new Error('NO_FILENAMES'));
 	}
 	var objects = [];
 	filenames.forEach(function (filename) {

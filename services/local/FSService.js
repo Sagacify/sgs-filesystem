@@ -89,7 +89,7 @@ function _getFilename(response) {
 		// TODO https://app.asana.com/0/11244390559721/14733882770247 //
 		////////////////////////////////////////////////////////////////
 
-		throw new SGError('NO_FILENAME_FOUND');
+		throw new Error('NO_FILENAME_FOUND');
 	}
 }
 
