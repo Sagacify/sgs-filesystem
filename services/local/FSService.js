@@ -1,6 +1,5 @@
 var fs = require('fs');
 var path = require('path');
-
 var tmp = require('tmp');
 var request = require('request');
 
@@ -59,7 +58,7 @@ exports.getFileFromUrl = function (url, callback) {
 
 			var filename;
 			try {
-				filename = _getFilename(response);
+				filename = _getFilename(response, url);
 			} catch (e) {
 				return callback(e);
 			}
@@ -75,21 +74,19 @@ exports.getFileFromUrl = function (url, callback) {
 	});
 };
 
-function _getFilename(response) {
+function _getFilename(response, url) {
 	console.log("headers:", response.headers);
 
-	// TODO sanitize inputs
+	////////////////////
+	// TODO sanitize  //
+	////////////////////
 
 	if (response.headers['content-type'] && !!~response.headers['content-type'].indexOf('name')) {
 		return _extractFilenameFromHeaders(response.headers['content-type'], 'name');
 	} else if (response.headers['content-disposition'] && !!~response.headers['content-disposition'].indexOf('filename')) {
 		return _extractFilenameFromHeaders(response.headers['content-disposition'], 'filename');
 	} else {
-		////////////////////////////////////////////////////////////////
-		// TODO https://app.asana.com/0/11244390559721/14733882770247 //
-		////////////////////////////////////////////////////////////////
-
-		throw new Error('NO_FILENAME_FOUND');
+		return path.basename(url);
 	}
 }
 
