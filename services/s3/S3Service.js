@@ -174,7 +174,7 @@ S3Service.prototype.uploadFileOnS3 = function (filepath, originalFilename, exten
 					return callback(err);
 				}
 
-				callback(err, self.getConfig().s3StaticURL + "/" + secure ? self.getConfig().s3SecuredBucketName : self.getConfig().s3BucketName + "/" + filename);
+				callback(err, self.getConfig().s3StaticURL + "/" + (secure ? self.getConfig().s3SecuredBucketName : self.getConfig().s3BucketName) + "/" + filename);
 			});
 		});
 	});
