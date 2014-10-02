@@ -1,5 +1,8 @@
+// Node.js core module
 var fs = require('fs');
 var path = require('path');
+
+// NPM modules
 var tmp = require('tmp');
 var request = require('request');
 

@@ -1,13 +1,19 @@
-var contentType = require('node-lib').content_type.ext;
-var VirusScan = require('../../utils/VirusScan');
-var FSService = require('../local/FSService');
+// Node.js core module
+var fs = require('fs');
 
+// NPM modules
 var async = require('async');
 var AWS = require('aws-sdk');
 var uuid = require('node-uuid');
-var fs = require('fs');
 var tmp = require('tmp');
 var knox = require('knox');
+
+// SSH modules
+var contentType = require('node-lib').content_type.ext;
+
+// Local modules
+var VirusScan = require('../../utils/VirusScan');
+var FSService = require('../local/FSService');
 
 var writeQueue = async.queue(function (task, callback) {
 	task(callback);

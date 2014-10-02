@@ -1,3 +1,4 @@
+// Node.js core module
 var exec = require('child_process').exec,
 	child;
 
@@ -7,7 +8,6 @@ var exec = require('child_process').exec,
  *		console.log(msg);
  *	});
  **/
-
 exports.launchFileScan = function (absFilePath, callback) {
 	_isAntivirusRUnning(function (yes) {
 		if (yes) {
@@ -24,7 +24,7 @@ exports.launchFileScan = function (absFilePath, callback) {
 	});
 };
 
-//Check if Antivirus service is started
+// Check if Antivirus service is started
 function _isAntivirusRUnning(callback) {
 	child = exec('ps ax | grep [c]lamd', function (error, stdout, stderr) {
 		if (error) {
@@ -38,7 +38,7 @@ function _isAntivirusRUnning(callback) {
 	});
 }
 
-//Start the antivirus service on the linux instance
+// Start the antivirus service on the linux instance
 function _startAntivirusService(callback) {
 	child = exec('service clamav-daemon start', function (err, stdout, stderr) {
 		if (err) {
@@ -55,7 +55,7 @@ function _startAntivirusService(callback) {
 	});
 }
 
-//Scan a file located at absFilePath
+// Scan a file located at absFilePath
 function _scanFile(absFilePath, callback) {
 	child = exec('clamdscan --no-summary ' + absFilePath, function (error, stdout, stderr) {
 		if (error !== null) {
