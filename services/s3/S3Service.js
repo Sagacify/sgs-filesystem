@@ -7,9 +7,7 @@ var AWS = require('aws-sdk');
 var uuid = require('node-uuid');
 var tmp = require('tmp');
 var knox = require('knox');
-
-// SSH modules
-var contentType = require('node-lib').content_type.ext;
+var mime = require('mime');
 
 // Local modules
 var VirusScan = require('../../utils/VirusScan');
@@ -113,7 +111,7 @@ S3Service.prototype.writeFileToS3 = function (base64data, originalFilename, exte
 		Bucket: secure ? this.getConfig().s3SecuredBucketName : this.getConfig().s3BucketName,
 		Key: filename,
 		Body: new Buffer(base64data, 'base64'),
-		ContentType: contentType.getContentType(extension),
+		ContentType: mime.lookup(extension),
 		ContentDisposition: 'attachment; filename="' + originalFilename || filename + '"'
 	}, function (err) {
 		callback(err, filename);

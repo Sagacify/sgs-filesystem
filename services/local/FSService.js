@@ -84,16 +84,51 @@ function _getFilename(response, url) {
 	// TODO sanitize  //
 	////////////////////
 
-	if (response.headers['content-type'] && !!~response.headers['content-type'].indexOf('name')) {
+	if (response.headers['content-type'] && !! ~response.headers['content-type'].indexOf('name')) {
 		return _extractFilenameFromHeaders(response.headers['content-type'], 'name');
-	} else if (response.headers['content-disposition'] && !!~response.headers['content-disposition'].indexOf('filename')) {
+	} else if (response.headers['content-disposition'] && !! ~response.headers['content-disposition'].indexOf('filename')) {
 		return _extractFilenameFromHeaders(response.headers['content-disposition'], 'filename');
 	} else {
-		return path.basename(url);
+		return _getFileName(url);
+
 	}
 }
 
 function _extractFilenameFromHeaders(header, key) {
 	var item = header.slice(header.indexOf(key));
 	return item.slice(item.indexOf('"') + 1, -1) || item.slice(item.indexOf('\'') + 1, -1);
+}
+
+function _getFileName(url) {
+	var anchor = url.indexOf('#');
+	var query = url.indexOf('?');
+	var end = Math.min(
+		anchor > 0 ? anchor : url.length,
+		query > 0 ? query : url.length);
+	return url.substring(url.lastIndexOf('/', end) + 1, end);
+}
+
+function _getPDFFileNameFromURL(url) {
+	var reURI = /^(?:([^:]+:)?\/\/[^\/]+)?([^?#]*)(\?[^#]*)?(#.*)?$/;
+	//            SCHEME      HOST         1.PATH  2.QUERY   3.REF
+	// Pattern to get last matching NAME.ext
+	var reFilename = /[^\/?#=]+\.pdf\b(?!.*\.pdf\b)/i;
+	var splitURI = reURI.exec(url);
+	var suggestedFilename = reFilename.exec(splitURI[1]) ||
+		reFilename.exec(splitURI[2]) ||
+		reFilename.exec(splitURI[3]);
+	if (suggestedFilename) {
+		suggestedFilename = suggestedFilename[0];
+		if (suggestedFilename.indexOf('%') !== -1) {
+			// URL-encoded %2Fpath%2Fto%2Ffile.pdf should be file.pdf
+			try {
+				suggestedFilename =
+					reFilename.exec(decodeURIComponent(suggestedFilename))[0];
+			} catch (e) { // Possible (extremely rare) errors:
+				// URIError "Malformed URI", e.g. for "%AA.pdf"
+				// TypeError "null has no properties", e.g. for "%2F.pdf"
+			}
+		}
+	}
+	return suggestedFilename || 'document.pdf';
 }
