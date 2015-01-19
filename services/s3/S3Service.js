@@ -136,7 +136,8 @@ S3Service.prototype.updateFilenameOnS3 = function (key, filename, secure, callba
 		Bucket: bucket,
 		CopySource: bucket + "/" + key,
 		Key: key,
-		ContentDisposition: 'attachment; filename="' + filename + '"'
+		ContentDisposition: 'attachment; filename="' + filename + '"',
+		MetadataDirective: 'REPLACE'
 	}, function (err) {
 		callback(err, filename);
 	});
