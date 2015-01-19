@@ -17,6 +17,10 @@ var writeQueue = async.queue(function (task, callback) {
 	task(callback);
 }, 3);
 
+var copyQueue = async.queue(function (task, callback) {
+	task(callback);
+}, 3);
+
 var readQueue = async.queue(function (task, callback) {
 	task(callback);
 }, 3);
@@ -48,6 +52,13 @@ S3Service.prototype.addToWriteQueue = function (params, callback) {
 	var self = this;
 	writeQueue.push(function (callback) {
 		self.getS3().client.putObject(params, callback);
+	}, callback);
+};
+
+S3Service.prototype.addToCopyQueue = function (params, callback) {
+	var self = this;
+	copyQueue.push(function (callback) {
+		self.getS3().client.copyObject(params, callback);
 	}, callback);
 };
 
@@ -113,6 +124,19 @@ S3Service.prototype.writeFileToS3 = function (base64data, originalFilename, exte
 		Body: new Buffer(base64data, 'base64'),
 		ContentType: mime.lookup(extension),
 		ContentDisposition: 'attachment; filename="' + originalFilename || filename + '"'
+	}, function (err) {
+		callback(err, filename);
+	});
+};
+
+S3Service.prototype.updateFilenameOnS3 = function (key, filename, secure, callback) {
+	var bucket = secure ? this.getConfig().s3SecuredBucketName : this.getConfig().s3BucketName;
+
+	this.addToCopyQueue({
+		Bucket: bucket,
+		CopySource: bucket + "/" + key,
+		Key: key,
+		ContentDisposition: 'attachment; filename="' + filename + '"'
 	}, function (err) {
 		callback(err, filename);
 	});
