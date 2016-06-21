@@ -13,12 +13,12 @@
 		"url": "https://github.com/Sagacify/sg-files-system.git"
 	},
 	"dependencies": {
-		"async": "~0.9.0",
+		"async": "0.9.0",
 		"aws-sdk": "2.0.0-rc.19",
-		"node-uuid": "^1.4.1",
-		"tmp": "~0.0.24",
-		"knox": "~0.9.1",
-		"request": "^2.39.0",
-		"mime": "^1.2.11"
+		"node-uuid": "1.4.1",
+		"tmp": "0.0.24",
+		"knox": "0.9.1",
+		"request": "2.39.0",
+		"mime": "1.2.11"
 	}
 }
